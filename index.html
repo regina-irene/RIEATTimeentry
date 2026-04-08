@@ -26,18 +26,22 @@ tbody tr { border-bottom: 1px solid #f0efea; }
 tbody tr:last-child { border-bottom: none; }
 tbody tr.row-ok  { background: #f8fdf9; }
 tbody tr.row-err { background: #fef8f8; }
-td { padding: 3px 6px; vertical-align: middle; }
-td.num-cell { text-align: center; font-size: 12px; color: #ccc; padding-left: 10px; }
-td input[type="date"], td input[type="number"], td input[type="text"], td select {
-  width: 100%; border: 1px solid transparent; border-radius: 6px; padding: 6px 7px;
+td { padding: 5px 6px; vertical-align: top; }
+td.num-cell { text-align: center; font-size: 12px; color: #ccc; padding-left: 10px; padding-top: 10px; }
+td input[type="date"], td input[type="number"], td select {
+  width: 100%; border: 1px solid transparent; border-radius: 6px; padding: 7px 7px;
+  font-size: 13px; font-family: inherit; color: #1a1a1a; background: transparent;
+}
+td input[type="text"] {
+  width: 100%; border: 1px solid transparent; border-radius: 6px; padding: 7px 7px;
   font-size: 13px; font-family: inherit; color: #1a1a1a; background: transparent;
 }
 td input:focus, td select:focus { outline: none; border-color: #4a6fa5; background: #f4f7fc; }
 td input:hover, td select:hover { border-color: #ddd; background: #fafaf8; }
 td input:disabled, td select:disabled { color: #aaa; }
-.desc-wrap { display: flex; gap: 4px; align-items: center; }
+.desc-wrap { display: flex; gap: 4px; align-items: flex-start; }
 .desc-wrap input { flex: 1; }
-.enhance-btn { flex-shrink: 0; border: none; border-radius: 6px; padding: 4px 9px; font-size: 11px; cursor: pointer; background: #f0f7ff; color: #1a5a9a; white-space: nowrap; font-family: inherit; }
+.enhance-btn { flex-shrink: 0; border: none; border-radius: 6px; padding: 4px 9px; font-size: 11px; cursor: pointer; background: #f0f7ff; color: #1a5a9a; white-space: nowrap; font-family: inherit; margin-top: 4px; }
 .enhance-btn:hover { background: #ddeeff; }
 .enhance-btn:disabled { background: #eee; color: #aaa; cursor: not-allowed; }
 .badge { font-size: 10px; padding: 2px 6px; border-radius: 8px; display: inline-block; }
@@ -159,7 +163,7 @@ function addRow() {
     '<td><select class="f-act">' + opts + '</select></td>' +
     '<td>' +
       '<div class="desc-wrap">' +
-        '<input type="text" class="f-desc" placeholder="Short note..." onblur="enhanceRow(' + id + ')">' +
+        '<textarea class="f-desc" placeholder="Short note..." rows="2" onblur="enhanceRow(' + id + ')" style="width:100%;border:1px solid transparent;border-radius:6px;padding:7px;font-size:13px;font-family:inherit;color:#1a1a1a;background:transparent;resize:vertical;min-height:52px"></textarea>' +
         '<button class="enhance-btn" id="ebtn-' + id + '" onclick="enhanceRow(' + id + ')" title="Enhance with AI">✦ Enhance</button>' +
       '</div>' +
       '<div class="err-note" id="enherr-' + id + '" style="display:none"></div>' +
