@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Entry Agent — EFL</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0efe9; min-height: 100vh; padding: 2rem 1rem; }
+.container { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
+.subtitle { font-size: 13px; color: #999; margin-bottom: 1rem; }
+.info-bar { background: #f0f7ff; border: 1px solid #c8dff7; border-radius: 9px; padding: 9px 14px; font-size: 13px; color: #1a5a9a; margin-bottom: 1rem; }
+.table-wrap { background: #fff; border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.08); overflow-x: auto; margin-bottom: 1rem; }
+table { width: 100%; border-collapse: collapse; min-width: 820px; }
+thead tr { background: #f7f6f2; border-bottom: 1.5px solid #e8e7e2; }
+thead th { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 8px; text-align: left; white-space: nowrap; }
+thead th.ai-col { color: #1a5a9a; }
+thead th:first-child { width: 34px; }
+thead th.col-date { width: 128px; }
+thead th.col-case { width: 185px; }
+thead th.col-dur  { width: 72px; }
+thead th.col-act  { width: 150px; }
+thead th.col-del  { width: 30px; }
+tbody tr { border-bottom: 1px solid #f0efea; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr.row-ok  { background: #f8fdf9; }
+tbody tr.row-err { background: #fef8f8; }
+td { padding: 3px 6px; vertical-align: middle; }
+td.num-cell { text-align: center; font-size: 12px; color: #ccc; padding-left: 10px; }
+td input[type="date"], td input[type="number"], td input[type="text"], td select {
+  width: 100%; border: 1px solid transparent; border-radius: 6px; padding: 6px 7px;
+  font-size: 13px; font-family: inherit; color: #1a1a1a; background: transparent;
+}
+td input:focus, td select:focus { outline: none; border-color: #4a6fa5; background: #f4f7fc; }
+td input:hover, td select:hover { border-color: #ddd; background: #fafaf8; }
+td input:disabled, td select:disabled { color: #aaa; }
+.desc-wrap { display: flex; gap: 4px; align-items: center; }
+.desc-wrap input { flex: 1; }
+.enhance-btn { flex-shrink: 0; border: none; border-radius: 6px; padding: 4px 9px; font-size: 11px; cursor: pointer; background: #f0f7ff; color: #1a5a9a; white-space: nowrap; font-family: inherit; }
+.enhance-btn:hover { background: #ddeeff; }
+.enhance-btn:disabled { background: #eee; color: #aaa; cursor: not-allowed; }
+.badge { font-size: 10px; padding: 2px 6px; border-radius: 8px; display: inline-block; }
+.badge.ok  { background: #edfaf4; color: #1a7a4a; }
+.badge.err { background: #fdecea; color: #c0392b; }
+.err-note { font-size: 11px; color: #c0392b; margin-top: 2px; }
+.ai-note  { font-size: 11px; color: #b05a00; margin-top: 2px; }
+.del-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 18px; padding: 1px 4px; border-radius: 5px; line-height: 1; }
+.del-btn:hover { color: #c0392b; background: #fdecea; }
+.add-row-btn { display: flex; align-items: center; gap: 6px; padding: 10px 16px; font-size: 13px; color: #888; cursor: pointer; border: none; background: none; border-top: 1px solid #f0efea; width: 100%; border-radius: 0 0 12px 12px; font-family: inherit; }
+.add-row-btn:hover { background: #fafaf8; color: #444; }
+.bottom-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 8px 0; }
+.summary { font-size: 14px; color: #666; }
+.summary strong { color: #1a1a1a; }
+.btn { padding: 9px 22px; border-radius: 9px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
+.btn-secondary { background: #ebebea; color: #444; }
+.btn-secondary:hover { background: #e0e0de; }
+.btn-success { background: #1a7a4a; color: #fff; }
+.btn-success:hover { background: #145f39; }
+.btn-success:disabled { background: #aaa; cursor: not-allowed; }
+.status-msg { font-size: 13px; padding: 12px 16px; border-radius: 9px; margin-top: 8px; }
+.status-success { background: #edfaf4; color: #1a7a4a; }
+.status-error   { background: #fdecea; color: #c0392b; }
+.status-loading { background: #f0f0ef; color: #555; }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #ccc; border-top-color: #555; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 5px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⚖️ Time Entry Agent</h1>
+  <p class="subtitle">Regina I. Edwards · EFL · Submit time entries directly to Airtable</p>
+
+  <div class="info-bar">
+    ✦ Type a short description, then press <strong>Tab</strong> or click <strong>✦ Enhance</strong> — AI will expand it into a detailed professional billing entry.
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th class="col-date">Date</th>
+          <th class="col-case">Case Name Lookup</th>
+          <th class="col-dur">Hours</th>
+          <th class="col-act">Activity Type</th>
+          <th class="ai-col">Description ✦ AI</th>
+          <th class="col-del"></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <button class="add-row-btn" onclick="addRow()">
+      <span style="font-size:18px;color:#bbb;line-height:1">+</span> Add row
+    </button>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="summary" id="summary">0 entries · 0.00 hrs</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" onclick="clearAll()">Clear all</button>
+      <button class="btn btn-success" id="submit-btn" onclick="submitAll()">Submit to Airtable</button>
+    </div>
+  </div>
+  <div id="status-area"></div>
+</div>
+
+<script>
+const AT_KEY   = 'pat6Z0NNSiH7jXZBH.0a94f243e2d469d658856d79281cfd741e853ef744fb90731604de331e7ba420';
+const AT_BASE  = 'appAuA3Ifddk44H5m';
+const AT_TABLE = 'tblRbKiu4UYIC1i7Y';
+const AN_KEY   = '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';
+
+const ACTIVITIES = [
+  'Case preparation','Client meeting','Court appearance','Deposition',
+  'Document drafting','GAL work','Legal research','Mediation',
+  'Phone / email','Review & analysis','Other'
+];
+
+let rowCounter = 0;
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function addRow() {
+  const id = ++rowCounter;
+  const tbody = document.getElementById('tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'row-' + id;
+  const opts = ACTIVITIES.map(a => '<option>' + a + '</option>').join('');
+  tr.innerHTML =
+    '<td class="num-cell" id="num-' + id + '">' + (tbody.children.length + 1) + '</td>' +
+    '<td><input type="date" class="f-date" value="' + today() + '" oninput="checkAutoAdd(' + id + ')"></td>' +
+    '<td><input type="text" class="f-case" placeholder="Smith v. Smith" oninput="checkAutoAdd(' + id + ');updateSummary()"></td>' +
+    '<td><input type="number" class="f-dur" placeholder="0.25" step="0.25" min="0.25" oninput="updateSummary();checkAutoAdd(' + id + ')"></td>' +
+    '<td><select class="f-act">' + opts + '</select></td>' +
+    '<td>' +
+      '<div class="desc-wrap">' +
+        '<input type="text" class="f-desc" placeholder="Short note..." onblur="enhanceRow(' + id + ')">' +
+        '<button class="enhance-btn" id="ebtn-' + id + '" onclick="enhanceRow(' + id + ')" title="Enhance with AI">✦ Enhance</button>' +
+      '</div>' +
+      '<div class="err-note" id="enherr-' + id + '" style="display:none"></div>' +
+    '</td>' +
+    '<td style="text-align:center"><button class="del-btn" onclick="deleteRow(' + id + ')">×</button></td>';
+  tbody.appendChild(tr);
+  updateRowNumbers();
+  updateSummary();
+}
+
+function checkAutoAdd(id) {
+  const tr = document.getElementById('row-' + id);
+  if (!tr) return;
+  const filled = tr.querySelector('.f-case').value.trim() || tr.querySelector('.f-dur').value;
+  const last = document.querySelector('#tbody tr:last-child');
+  if (filled && last && last.id === 'row-' + id) addRow();
+}
+
+function deleteRow(id) {
+  const tr = document.getElementById('row-' + id);
+  if (tr) tr.remove();
+  updateRowNumbers();
+  updateSummary();
+  if (!document.querySelector('#tbody tr')) addRow();
+}
+
+function updateRowNumbers() {
+  document.querySelectorAll('#tbody tr').forEach(function(tr, i) {
+    const cell = document.getElementById('num-' + tr.id.replace('row-', ''));
+    if (cell && !cell.querySelector('.badge')) cell.textContent = i + 1;
+  });
+}
+
+function updateSummary() {
+  var count = 0, total = 0;
+  document.querySelectorAll('#tbody tr').forEach(function(tr) {
+    var c = tr.querySelector('.f-case') && tr.querySelector('.f-case').value.trim();
+    var d = parseFloat(tr.querySelector('.f-dur') && tr.querySelector('.f-dur').value);
+    if (c || d) { count++; if (!isNaN(d)) total += d; }
+  });
+  document.getElementById('summary').innerHTML =
+    '<strong>' + count + '</strong> entr' + (count === 1 ? 'y' : 'ies') +
+    ' &nbsp;·&nbsp; <strong>' + total.toFixed(2) + '</strong> hrs';
+}
+
+function clearAll() {
+  document.getElementById('tbody').innerHTML = '';
+  rowCounter = 0;
+  document.getElementById('status-area').innerHTML = '';
+  for (var i = 0; i < 5; i++) addRow();
+}
+
+function setStatus(type, msg) {
+  document.getElementById('status-area').innerHTML = '<div class="status-msg status-' + type + '">' + msg + '</div>';
+}
+
+async function enhanceRow(id) {
+  const tr = document.getElementById('row-' + id);
+  if (!tr || tr.dataset.submitted) return;
+  const descInput = tr.querySelector('.f-desc');
+  const btn = document.getElementById('ebtn-' + id);
+  const errEl = document.getElementById('enherr-' + id);
+  const desc = descInput.value.trim();
+  if (!desc || tr.dataset.enhancing) return;
+
+  const caseName = tr.querySelector('.f-case').value.trim();
+  const activity = tr.querySelector('.f-act').value;
+  const duration = tr.querySelector('.f-dur').value;
+
+  tr.dataset.enhancing = '1';
+  descInput.disabled = true;
+  descInput.style.background = '#f0f7ff';
+  descInput.style.fontStyle = 'italic';
+  btn.disabled = true;
+  btn.textContent = '...';
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': AN_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: 'You are a legal billing specialist for a family law attorney. Expand the following brief note into a detailed, professional billing entry that clearly demonstrates value to the client.\n\nCase: "' + (caseName || 'family law matter') + '"\nActivity: "' + activity + '"\nDuration: ' + (duration || '?') + ' hours\nNote: "' + desc + '"\n\nWrite 2-3 sentences. Be specific and professional. Use active legal language that justifies the time spent. Do NOT include the case name, hours, or activity label — just the description text. Return only the description, nothing else.'
+        }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+    if (!data.content) throw new Error('No response');
+    descInput.value = data.content[0].text.trim();
+  } catch (e) {
+    errEl.textContent = 'AI error: ' + e.message;
+    errEl.style.display = 'block';
+  }
+
+  delete tr.dataset.enhancing;
+  descInput.disabled = false;
+  descInput.style.background = '';
+  descInput.style.fontStyle = '';
+  btn.disabled = false;
+  btn.textContent = '✦ Enhance';
+}
+
+async function submitAll() {
+  const trs = Array.from(document.querySelectorAll('#tbody tr')).filter(function(tr) {
+    return tr.querySelector('.f-case').value.trim() && parseFloat(tr.querySelector('.f-dur').value) > 0 && !tr.dataset.submitted;
+  });
+
+  if (!trs.length) {
+    setStatus('error', 'Please fill in at least Case Name Lookup and Hours before submitting.');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+  setStatus('loading', '<span class="spinner"></span>Submitting ' + trs.length + ' entr' + (trs.length === 1 ? 'y' : 'ies') + ' to Airtable...');
+
+  var ok = 0, fail = 0;
+
+  for (var i = 0; i < trs.length; i++) {
+    var tr = trs[i];
+    var id = tr.id.replace('row-', '');
+    var caseName = tr.querySelector('.f-case').value.trim();
+    var date     = tr.querySelector('.f-date').value || today();
+    var dur      = parseFloat(tr.querySelector('.f-dur').value);
+    var activity = tr.querySelector('.f-act').value;
+    var desc     = tr.querySelector('.f-desc').value.trim();
+    var numCell  = document.getElementById('num-' + id);
+
+    var timeEntry = '[' + caseName + '] ' + activity + (desc ? ' — ' + desc : '');
+    var fields = { 'Date': date, 'Time Entry': timeEntry, 'Duration': dur };
+
+    try {
+      var res = await fetch('https://api.airtable.com/v0/' + AT_BASE + '/' + AT_TABLE, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + AT_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: fields })
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error((data.error && data.error.message) ? data.error.message : JSON.stringify(data.error));
+
+      tr.dataset.submitted = '1';
+      tr.classList.add('row-ok');
+      tr.querySelectorAll('input, select, button').forEach(function(el) { el.disabled = true; });
+      numCell.innerHTML = '<span class="badge ok">✓</span>';
+      ok++;
+    } catch (err) {
+      tr.classList.add('row-err');
+      numCell.innerHTML = '<span class="badge err">✗</span>';
+      var errEl = document.getElementById('enherr-' + id);
+      if (errEl) { errEl.textContent = err.message; errEl.style.display = 'block'; }
+      fail++;
+    }
+
+    await new Promise(function(r) { setTimeout(r, 150); });
+  }
+
+  if (fail === 0) {
+    setStatus('success', '✓ ' + ok + ' entr' + (ok === 1 ? 'y' : 'ies') + ' logged to Airtable successfully!');
+  } else {
+    setStatus('error', ok + ' submitted, ' + fail + ' failed. See red rows for details.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Submit to Airtable';
+}
+
+// Init with 5 blank rows
+for (var i = 0; i < 5; i++) addRow();
+</script>
+</body>
+</html>
