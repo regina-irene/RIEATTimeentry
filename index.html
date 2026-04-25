@@ -136,6 +136,11 @@ let rowCounter = 0;
 
 function today() { return new Date().toISOString().split('T')[0]; }
 
+function autoExpand(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
 function saveKey(val) {
   localStorage.setItem('efl_an_key', val.trim());
   document.getElementById('key-status').textContent = val.trim() ? '✓ Saved' : '';
@@ -163,7 +168,7 @@ function addRow() {
     '<td><select class="f-act">' + opts + '</select></td>' +
     '<td>' +
       '<div class="desc-wrap">' +
-        '<textarea class="f-desc" placeholder="Short note..." rows="2" onblur="enhanceRow(' + id + ')" style="width:100%;border:1px solid transparent;border-radius:6px;padding:7px;font-size:13px;font-family:inherit;color:#1a1a1a;background:transparent;resize:vertical;min-height:52px"></textarea>' +
+        '<textarea class="f-desc" placeholder="Short note..." rows="2" onblur="enhanceRow(' + id + ')" oninput="autoExpand(this)" style="width:100%;border:1px solid transparent;border-radius:6px;padding:7px;font-size:13px;font-family:inherit;color:#1a1a1a;background:transparent;resize:none;min-height:52px;overflow:hidden"></textarea>' +
         '<button class="enhance-btn" id="ebtn-' + id + '" onclick="enhanceRow(' + id + ')" title="Enhance with AI">✦ Enhance</button>' +
       '</div>' +
       '<div class="err-note" id="enherr-' + id + '" style="display:none"></div>' +
@@ -263,6 +268,7 @@ async function enhanceRow(id) {
     if (data.error) throw new Error(data.error.message || 'API error');
     if (!data.content) throw new Error('No response');
     descInput.value = data.content[0].text.trim();
+    autoExpand(descInput);
   } catch (e) {
     errEl.textContent = 'AI error: ' + e.message;
     errEl.style.display = 'block';
