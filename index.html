@@ -137,8 +137,13 @@ let rowCounter = 0;
 function today() { return new Date().toISOString().split('T')[0]; }
 
 function autoExpand(el) {
+  // Reset to auto first so shrinking works
   el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
+  // Set to scrollHeight so all content is visible
+  var newHeight = Math.max(el.scrollHeight, 52);
+  el.style.height = newHeight + 'px';
+  // Only hide scrollbar if content fits
+  el.style.overflowY = el.scrollHeight <= newHeight ? 'hidden' : 'auto';
 }
 
 function saveKey(val) {
@@ -168,7 +173,7 @@ function addRow() {
     '<td><select class="f-act">' + opts + '</select></td>' +
     '<td>' +
       '<div class="desc-wrap">' +
-        '<textarea class="f-desc" placeholder="Short note..." rows="2" onblur="enhanceRow(' + id + ')" oninput="autoExpand(this)" style="width:100%;border:1px solid transparent;border-radius:6px;padding:7px;font-size:13px;font-family:inherit;color:#1a1a1a;background:transparent;resize:none;min-height:52px;overflow:hidden"></textarea>' +
+        '<textarea class="f-desc" placeholder="Short note..." rows="2" onblur="enhanceRow(' + id + ')" oninput="autoExpand(this)" style="width:100%;border:1px solid transparent;border-radius:6px;padding:7px;font-size:13px;font-family:inherit;color:#1a1a1a;background:transparent;resize:vertical;min-height:52px;overflow-y:hidden;box-sizing:border-box"></textarea>' +
         '<button class="enhance-btn" id="ebtn-' + id + '" onclick="enhanceRow(' + id + ')" title="Enhance with AI">✦ Enhance</button>' +
       '</div>' +
       '<div class="err-note" id="enherr-' + id + '" style="display:none"></div>' +
